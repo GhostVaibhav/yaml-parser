@@ -12,6 +12,7 @@ std::vector<ypars::Token> ypars::lexer::tokenize(
   m_src = str;
   std::string buffer;
   std::vector<Token> tokens;
+  int line = 0, col = 0;
 
   try {
     while (peek().has_value()) {
@@ -27,23 +28,29 @@ std::vector<ypars::Token> ypars::lexer::tokenize(
         } else {
           tokens.push_back({.type = TokenType::_KEY, .value = buffer});
         }
+        col += buffer.size();
         buffer.clear();
       } else if (peek().value() == ':') {
         consume();
         tokens.push_back({.type = TokenType::_OP_COLON});
+        ++col;
       } else if (std::isspace(peek().value())) {
+        ++col;
         consume();
+      } else if (peek().value() == '\n') {
+        col = 0;
+        ++line;
       } else {
         throw std::invalid_argument("");
       }
     }
   } catch (std::bad_optional_access& e) {
     ypars::error err(ypars::component::comp_lexer,
-                     ypars::reason::reason_bad_optional_access);
+                     ypars::reason::reason_bad_optional_access, line, col);
     throw std::runtime_error(err.toString());
   } catch (std::invalid_argument& e) {
     ypars::error err(ypars::component::comp_lexer,
-                     ypars::reason::reason_invalid_arg);
+                     ypars::reason::reason_invalid_arg, line, col);
     throw std::runtime_error(err.toString());
   }
 
