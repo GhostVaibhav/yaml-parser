@@ -1,16 +1,34 @@
 #pragma once
 
 #include <iostream>
-#include <tuple>
 #include <string>
+#include <tuple>
 
-namespace vpars_error {
-    // Function to return the error message and the error code
-    std::tuple<std::string, int> get_error_info(int);
+namespace ypars {
 
-    // Function to pretty print the error message
-    void print_error(int);
+enum component {
+  comp_lexer,
+  comp_parser,
+};
 
-    // Function to pretty print the error message with additional information
-    void print_error(int, std::string info);
-}
+enum reason {
+  reason_invalid_arg,
+  reason_bad_optional_access,
+};
+
+class error {
+  component c;
+  reason r;
+  std::optional<int> line;
+  std::optional<int> col;
+
+ public:
+  error(component _c, reason _r) : c(_c), r(_r) {}
+  error(component _c, reason _r, int _line) : c(_c), r(_r), line(_line) {}
+  error(component _c, reason _r, int _line, int _col)
+      : c(_c), r(_r), line(_line), col(_col) {}
+
+  std::string toString();
+};
+
+}  // namespace ypars

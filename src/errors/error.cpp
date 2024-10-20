@@ -1,25 +1,41 @@
 #include "errors/error.h"
 
-namespace vpars_error {
-    // Function to return the error message and the error code
-    std::tuple<std::string, int> get_error_info(int error_code) {
-        switch(error_code) {
-            case 1:
-                return {"Unable to open the file", error_code};
-            default:
-                return {"Unknown error", error_code};
-        }
-    }
+namespace ypars {
 
-    // Function to pretty print the error message
-    void print_error(int error_code) {
-        auto [msg, code] = get_error_info(error_code);
-        std::cout << "Code: " << code << " | " << msg << std::endl;
-    }
+// Function to return the error message and the error code
+std::string error::toString() {
+  std::string result = "";
+  switch (c) {
+    case comp_lexer:
+      result += "[LEX] ";
+      break;
+    case comp_parser:
+      result += "[PAR] ";
+      break;
+    default:
+      break;
+  }
 
-    // Function to pretty print the error message with additional information
-    void print_error(int error_code, std::string info) {
-        auto [msg, code] = get_error_info(error_code);
-        std::cout << "Code: " << code << " | " << msg << ": " << info << std::endl;
-    }
+  switch (r) {
+    case reason_invalid_arg:
+      result += "Invalid Argument";
+      break;
+    case reason_bad_optional_access:
+      result += "Bad Optional Access";
+      break;
+    default:
+      break;
+  }
+
+  if (line.has_value()) {
+    result += " | Line: " + std::to_string(line.value());
+  }
+
+  if (col.has_value()) {
+    result += ", Col: " + std::to_string(col.value());
+  }
+
+  return result;
 }
+
+}  // namespace ypars
