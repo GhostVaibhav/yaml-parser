@@ -143,12 +143,17 @@ int ypars::gui::start(SDL_Window *window, SDL_Renderer *renderer,
                                   // clear the bool when clicked)
       ImGui::Text("Hello from another window!");
       if (ImGui::InputTextMultiline("Input Text", &ypars::text)) {
-        auto tokens = l.tokenize(std::make_shared<std::string>(ypars::text));
-        for (auto &token : tokens) {
-          ypars::logger->info("Token: " + tokenToString(token.type) +
-                              (token.value.has_value()
-                                   ? (" | Value: " + token.value.value() + " ")
-                                   : " "));
+        try {
+          auto tokens = l.tokenize(std::make_shared<std::string>(ypars::text));
+          for (auto &token : tokens) {
+            ypars::logger->info(
+                "Token: " + tokenToString(token.type) +
+                (token.value.has_value()
+                     ? (" | Value: " + token.value.value() + " ")
+                     : " "));
+          }
+        } catch (std::exception &e) {
+          ypars::logger->error(e.what());
         }
       }
       if (ImGui::Button("Close Me")) show_another_window = false;
