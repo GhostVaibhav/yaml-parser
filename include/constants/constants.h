@@ -1,6 +1,9 @@
 #pragma once
 
-#include <iostream>
+#include <string>
+#include <vector>
+
+#include "lexer/lexer.h"
 
 #define DEBUG
 #define iscs(key, val) inline static const std::string key = val
@@ -16,5 +19,6 @@ class constant {
 };
 
 static std::string text;
+static std::vector<ypars::Token> tokens;
 
 }  // namespace ypars

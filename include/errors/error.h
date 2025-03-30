@@ -1,8 +1,6 @@
 #pragma once
 
-#include <iostream>
 #include <string>
-#include <tuple>
 
 namespace ypars {
 
@@ -14,6 +12,10 @@ enum component {
 enum reason {
   reason_invalid_arg,
   reason_bad_optional_access,
+  reason_bad_key_format,
+  reason_bad_value_format,
+  reason_bad_statement_format,
+  reason_bad_colon_position
 };
 
 class error {

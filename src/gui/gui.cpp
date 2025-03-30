@@ -1,20 +1,30 @@
 #include "gui/gui.h"
 
+#include <string>
+#include <variant>
+
+#include "./imgui.h"
+#include "./imgui_impl_sdl2.h"
+#include "./imgui_impl_sdlrenderer2.h"
 #include "constants/constants.h"
 #include "lexer/lexer.h"
 #include "logger/log.h"
+#include "misc/cpp/imgui_stdlib.h"
+#include "parser/parser.h"
 
-std::string tokenToString(ypars::TokenType type) {
-  switch (type) {
-    case ypars::TokenType::_KEY:
-      return "KEY";
-    case ypars::TokenType::_VALUE:
-      return "VALUE";
-    case ypars::TokenType::_OP_COLON:
-      return "OP_COLON";
-    default:
-      return "";
-  }
+void print_value(ypars::NodeValue *nodeVal) {
+  struct ValueVisitor {
+    void operator()(const ypars::Token val) {
+      ypars::logger->info(val.value.value());
+    }
+    void operator()(const std::vector<ypars::NodeStmt *> val) {
+      for (auto stmt : val) {
+        ypars::logger->info("Key: " + stmt->key->key.value.value());
+        print_value(stmt->value);
+      }
+    }
+  } visitor;
+  std::visit(visitor, nodeVal->var);
 }
 
 int ypars::gui::start(SDL_Window *window, SDL_Renderer *renderer,
@@ -62,13 +72,11 @@ int ypars::gui::start(SDL_Window *window, SDL_Renderer *renderer,
   // io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f,
   // nullptr, io.Fonts->GetGlyphRangesJapanese()); IM_ASSERT(font != nullptr);
 
-  // Our state
-  bool show_demo_window = true;
-  bool show_another_window = true;
   ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
   // Main loop
   bool done = false;
+  bool error = false;
   while (!done) {
     // Poll and handle events (inputs, window resize, etc.)
     // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to
@@ -94,71 +102,58 @@ int ypars::gui::start(SDL_Window *window, SDL_Renderer *renderer,
     ImGui_ImplSDL2_NewFrame();
     ImGui::NewFrame();
 
-    // 1. Show the big demo window (Most of the sample code is in
-    // ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear
-    // ImGui!).
-    if (show_demo_window) ImGui::ShowDemoWindow(&show_demo_window);
+    const ImGuiViewport *viewport = ImGui::GetMainViewport();
+    ImGui::SetNextWindowPos(viewport->Pos);
+    ImGui::SetNextWindowSize(viewport->Size);
+    ImGui::SetNextWindowViewport(viewport->ID);
+    ImGui::SetNextWindowBgAlpha(0.0f);
 
-    // 2. Show a simple window that we create ourselves. We use a Begin/End pair
-    // to create a named window.
-    {
-      static float f = 0.0f;
-      static int counter = 0;
+    ImGuiWindowFlags window_flags =
+        ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+    window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
+                    ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+    window_flags |=
+        ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
 
-      ImGui::Begin("Hello, world!");  // Create a window called "Hello, world!"
-                                      // and append into it.
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 
-      ImGui::Text("This is some useful text.");  // Display some text (you can
-                                                 // use a format strings too)
-      ImGui::Checkbox(
-          "Demo Window",
-          &show_demo_window);  // Edit bools storing our window open/close state
-      ImGui::Checkbox("Another Window", &show_another_window);
+    ImGui::Begin("YAML Parser", nullptr, window_flags);
+    ImGui::PopStyleVar(3);
 
-      ImGui::SliderFloat(
-          "float", &f, 0.0f,
-          1.0f);  // Edit 1 float using a slider from 0.0f to 1.0f
-      ImGui::ColorEdit3(
-          "clear color",
-          (float *)&clear_color);  // Edit 3 floats representing a color
-
-      if (ImGui::Button(
-              "Button"))  // Buttons return true when clicked (most widgets
-                          // return true when edited/activated)
-        counter++;
-      ImGui::SameLine();
-      ImGui::Text("counter = %d", counter);
-
-      ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
-                  1000.0f / io.Framerate, io.Framerate);
-      ImGui::End();
+    if (error) {
+      ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 0, 0, 255));
+    } else {
+      ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 255, 0, 255));
     }
-
-    // 3. Show another simple window.
-    if (show_another_window) {
-      ImGui::Begin(
-          "Another Window",
-          &show_another_window);  // Pass a pointer to our bool variable (the
-                                  // window will have a closing button that will
-                                  // clear the bool when clicked)
-      ImGui::Text("Hello from another window!");
-      if (ImGui::InputTextMultiline("Input Text", &ypars::text)) {
-        try {
-          auto tokens = l.tokenize(std::make_shared<std::string>(ypars::text));
-          for (auto &token : tokens) {
-            ypars::logger->info(
-                "Token: " + tokenToString(token.type) +
-                (token.value.has_value()
-                     ? (" | Value: " + token.value.value() + " ")
-                     : " "));
-          }
-        } catch (std::exception &e) {
-          ypars::logger->error(e.what());
+    if (ImGui::InputTextMultiline("Input Text", &ypars::text)) {
+      try {
+        ypars::tokens = l.tokenize(ypars::text);
+        for (auto &token : tokens) {
+          ypars::logger->info("Token: " + tokenToString(token.type) +
+                              (token.value.has_value()
+                                   ? (" | Value: " + token.value.value() + " ")
+                                   : " ") +
+                              " | Line: " + std::to_string(token.line) +
+                              " | Indent: " + std::to_string(token.indent));
         }
+        ypars::parser p(tokens);
+        auto node = p.parse_prog();
+        if (node != nullptr && !node->stmts.empty()) {
+          for (auto stmt : node->stmts) {
+            ypars::logger->info("Key: " + stmt->key->key.value.value());
+            print_value(stmt->value);
+          }
+        }
+        error = false;
+      } catch (std::exception &e) {
+        ypars::logger->error(e.what());
+        error = true;
       }
-      if (ImGui::Button("Close Me")) show_another_window = false;
-      ImGui::End();
     }
+    ImGui::PopStyleColor();
+    ImGui::End();
 
     // Rendering
     ImGui::Render();

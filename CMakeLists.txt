@@ -10,7 +10,7 @@ ADD_SUBDIRECTORY(deps)
 FILE(GLOB SOURCES "src/*/*.cpp")
 
 # Add a glob of all the header files
-FILE(GLOB HEADERS "include/*/*.h")
+FILE(GLOB HEADERS "include/*/*.h" "include/*/*.hpp")
 
 # Sets the imgui's source files
 set(IMGUI_SOURCES 

@@ -1,13 +1,10 @@
-#include <filesystem>
-#include <fstream>
-#include <iostream>
 #include <string>
 
 #include "constants/constants.h"
-#include "errors/error.h"
 #include "gui/gui.h"
 #include "lexer/lexer.h"
 #include "logger/log.h"
+#include "spdlog/sinks/stdout_color_sinks.h"
 
 namespace ypars {
 

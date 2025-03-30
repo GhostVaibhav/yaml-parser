@@ -1,7 +1,7 @@
 #pragma once
 
-#include <iostream>
 #include <optional>
+#include <string>
 #include <vector>
 
 namespace ypars {
@@ -11,7 +11,11 @@ enum TokenType { _KEY, _VALUE, _OP_COLON };
 struct Token {
   TokenType type;
   std::optional<std::string> value;
+  int indent = -1;
+  int line;
 };
+
+std::string tokenToString(ypars::TokenType type);
 
 class lexer {
  private:
@@ -31,7 +35,7 @@ class lexer {
  public:
   lexer(std::string source) : m_src(std::make_shared<std::string>(source)) {}
 
-  std::vector<Token> tokenize(std::shared_ptr<std::string> str);
+  std::vector<Token> tokenize(std::string str);
 };
 
 }  // namespace ypars

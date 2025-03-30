@@ -1,8 +1,7 @@
 #pragma once
 
 // Including the Spdlog library
-#include "spdlog/sinks/stdout_color_sinks.h"
-#include "spdlog/spdlog.h"
+#include "spdlog/logger.h"
 
 namespace ypars {
 
