@@ -3,10 +3,10 @@
 #include <string>
 #include <variant>
 
-#include "./imgui.h"
-#include "./imgui_impl_sdl2.h"
-#include "./imgui_impl_sdlrenderer2.h"
 #include "constants/constants.h"
+#include "imgui.h"
+#include "imgui_impl_sdl2.h"
+#include "imgui_impl_sdlrenderer2.h"
 #include "lexer/lexer.h"
 #include "logger/log.h"
 #include "misc/cpp/imgui_stdlib.h"
