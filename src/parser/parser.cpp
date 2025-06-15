@@ -14,7 +14,7 @@
 namespace ypars {
 
 void parser::error_expected(const std::string& msg) const {
-  int line = peek(-1).value().line;
+  const int line = peek(-1).value().line;
   ypars::logger->info("[" + std::to_string(line) + "]" + "[PARSER] Expected " +
                       msg);
   exit(EXIT_FAILURE);
@@ -110,24 +110,24 @@ NodeProg* parser::parse_prog() {
     }
   } catch (std::exception& e) {
     if (const std::string reason = e.what(); reason == "VALUE") {
-      ypars::error err(ypars::component::comp_parser,
+      const ypars::error err(ypars::component::comp_parser,
                        ypars::reason::reason_bad_value_format);
       throw std::runtime_error(err.toString());
     } else if (reason == "KEY") {
-      ypars::error err(ypars::component::comp_parser,
+      const ypars::error err(ypars::component::comp_parser,
                        ypars::reason::reason_bad_key_format);
       throw std::runtime_error(err.toString());
     } else if (reason == "STATEMENT") {
-      ypars::error err(ypars::component::comp_parser,
+      const ypars::error err(ypars::component::comp_parser,
                        ypars::reason::reason_bad_statement_format);
       throw std::runtime_error(err.toString());
     } else if (reason == "COLON") {
-      ypars::error err(ypars::component::comp_parser,
+      const ypars::error err(ypars::component::comp_parser,
                        ypars::reason::reason_bad_colon_position);
       throw std::runtime_error(err.toString());
     } else {
       ypars::logger->error(reason);
-      ypars::error err(ypars::component::comp_parser,
+      const ypars::error err(ypars::component::comp_parser,
                        ypars::reason::reason_bad_optional_access);
       throw std::runtime_error(err.toString());
     }
