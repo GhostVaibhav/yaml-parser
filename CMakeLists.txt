@@ -1,5 +1,7 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.28)
 
+set(JSON_BuildTests OFF CACHE INTERNAL "")
+
 # Set the project name
 PROJECT(ypars)
 

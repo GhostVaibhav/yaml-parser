@@ -29,11 +29,11 @@ struct NodeProg {
 
 class parser {
  private:
-  std::optional<ypars::Token> peek(int) const;
+  [[nodiscard]] std::optional<ypars::Token> peek(int) const;
 
   ypars::Token consume();
 
-  void error_expected(const std::string& msg);
+  void error_expected(const std::string& msg) const;
 
   ypars::Token try_consume_err(ypars::TokenType type);
 

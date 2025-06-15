@@ -29,8 +29,9 @@ int main(int argc, char *argv[]) {
 #endif
 
   // Create window with SDL_Renderer graphics context
-  SDL_WindowFlags window_flags =
-      (SDL_WindowFlags)(SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
+  constexpr auto window_flags =
+      static_cast<SDL_WindowFlags>(SDL_WINDOW_RESIZABLE |
+                                                   SDL_WINDOW_ALLOW_HIGHDPI);
   SDL_Window *window =
       SDL_CreateWindow(ypars::constant::appName.c_str(), SDL_WINDOWPOS_CENTERED,
                        SDL_WINDOWPOS_CENTERED, 1280, 720, window_flags);
@@ -46,11 +47,10 @@ int main(int argc, char *argv[]) {
   }
   ypars::logger->info("Window and renderer created successfully");
 
-  ypars::gui g;
   ypars::lexer l(ypars::text);
 
   try {
-    g.start(window, renderer, l);
+    ypars::gui::start(window, renderer, l);
   } catch (std::exception &e) {
     ypars::logger->error(e.what());
     returnCode = 1;

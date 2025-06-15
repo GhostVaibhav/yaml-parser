@@ -9,7 +9,7 @@ namespace ypars {
 
 class gui {
  public:
-  int start(SDL_Window *, SDL_Renderer *, ypars::lexer &);
+  static int start(SDL_Window *, SDL_Renderer *, ypars::lexer &);
 };
 
 }  // namespace ypars

@@ -3,8 +3,8 @@
 namespace ypars {
 
 // Function to return the error message and the error code
-std::string error::toString() {
-  std::string result = "";
+std::string error::toString() const {
+  std::string result;
   switch (c) {
     case comp_lexer:
       result += "[LEX] ";

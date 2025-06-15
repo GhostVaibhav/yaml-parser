@@ -13,14 +13,14 @@
 
 namespace ypars {
 
-void parser::error_expected(const std::string& msg) {
+void parser::error_expected(const std::string& msg) const {
   int line = peek(-1).value().line;
   ypars::logger->info("[" + std::to_string(line) + "]" + "[PARSER] Expected " +
                       msg);
   exit(EXIT_FAILURE);
 }
 
-std::optional<ypars::Token> parser::peek(int offset = 0) const {
+std::optional<ypars::Token> parser::peek(const int offset = 0) const {
   if (m_index + offset >= m_tokens.size()) {
     return {};
   } else {
@@ -28,7 +28,7 @@ std::optional<ypars::Token> parser::peek(int offset = 0) const {
   }
 }
 
-ypars::Token parser::try_consume_err(ypars::TokenType type) {
+ypars::Token parser::try_consume_err(const ypars::TokenType type) {
   if (peek().has_value() && peek().value().type == type) {
     return consume();
   } else {
@@ -37,7 +37,7 @@ ypars::Token parser::try_consume_err(ypars::TokenType type) {
   }
 }
 
-std::optional<ypars::Token> parser::try_consume(ypars::TokenType type) {
+std::optional<ypars::Token> parser::try_consume(const ypars::TokenType type) {
   if (peek().has_value() && peek().value().type == type) {
     return consume();
   } else {
@@ -48,13 +48,12 @@ std::optional<ypars::Token> parser::try_consume(ypars::TokenType type) {
 ypars::Token parser::consume() { return m_tokens.at(m_index++); }
 
 std::optional<NodeKey*> parser::parse_key() {
-  if (peek().has_value() && peek().value().type == TokenType::_KEY) {
+  if (peek().has_value() && peek().value().type == TokenType::KEY) {
     auto key = m_allocator.alloc<NodeKey>();
     key->key = consume();
     return key;
   }
   throw std::runtime_error("KEY");
-  return {};
 }
 
 std::optional<NodeValue*> parser::parse_value() {
@@ -68,47 +67,41 @@ std::optional<NodeValue*> parser::parse_value() {
         valueStmts.push_back(stmt.value());
       } else {
         throw std::runtime_error("VALUE");
-        return {};
       }
     }
     value->var = valueStmts;
     return value;
-  } else if (peek().has_value() && peek().value().type == TokenType::_VALUE) {
+  } else if (peek().has_value() && peek().value().type == TokenType::VALUE) {
     auto value = m_allocator.alloc<NodeValue>();
     value->var = consume();
     return value;
   }
   throw std::runtime_error("VALUE");
-  return {};
 }
 
 std::optional<NodeStmt*> parser::parse_stmt() {
-  if (peek().has_value() && peek().value().type == TokenType::_KEY) {
+  if (peek().has_value() && peek().value().type == TokenType::KEY) {
     auto stmt = m_allocator.alloc<NodeStmt>();
-    if (auto keyStmt = parse_key()) {
+    if (const auto keyStmt = parse_key()) {
       stmt->key = keyStmt.value();
     } else {
       throw std::runtime_error("KEY");
-      return {};
     }
-    if (!try_consume(TokenType::_OP_COLON).has_value()) {
+    if (!try_consume(TokenType::OP_COLON).has_value()) {
       throw std::runtime_error("COLON");
-      return {};
     }
-    if (auto valStmt = parse_value()) {
+    if (const auto valStmt = parse_value()) {
       stmt->value = valStmt.value();
     } else {
       throw std::runtime_error("VALUE");
-      return {};
     }
     return stmt;
   }
   throw std::runtime_error("STATEMENT");
-  return {};
 }
 
 NodeProg* parser::parse_prog() {
-  auto prog = m_allocator.alloc<NodeProg>();
+  const auto prog = m_allocator.alloc<NodeProg>();
   try {
     while (peek().has_value()) {
       if (auto stmt = parse_stmt()) {
@@ -116,8 +109,7 @@ NodeProg* parser::parse_prog() {
       }
     }
   } catch (std::exception& e) {
-    std::string reason = e.what();
-    if (reason == "VALUE") {
+    if (const std::string reason = e.what(); reason == "VALUE") {
       ypars::error err(ypars::component::comp_parser,
                        ypars::reason::reason_bad_value_format);
       throw std::runtime_error(err.toString());

@@ -3,6 +3,7 @@
 #include <string>
 #include <variant>
 
+#include "nlohmann/json.hpp"
 #include "constants/constants.h"
 #include "imgui.h"
 #include "imgui_impl_sdl2.h"
@@ -12,18 +13,24 @@
 #include "misc/cpp/imgui_stdlib.h"
 #include "parser/parser.h"
 
-void print_value(ypars::NodeValue *nodeVal) {
+void get_value(ypars::NodeValue *nodeVal, nlohmann::json& json_value) {
   struct ValueVisitor {
-    void operator()(const ypars::Token val) {
-      ypars::logger->info(val.value.value());
+    nlohmann::json& json_value;
+
+    void operator()(const ypars::Token& val) const {
+      json_value["value"] = val.value.value();
     }
-    void operator()(const std::vector<ypars::NodeStmt *> val) {
-      for (auto stmt : val) {
-        ypars::logger->info("Key: " + stmt->key->key.value.value());
-        print_value(stmt->value);
+    void operator()(const std::vector<ypars::NodeStmt *>& val) const {
+      nlohmann::json temp;
+      for (const auto stmt : val) {
+        temp["key"] = stmt->key->key.value.value();
+        get_value(stmt->value, temp);
       }
+      json_value["value"] = temp;
     }
-  } visitor;
+  };
+  ValueVisitor visitor({.json_value = json_value});
+
   std::visit(visitor, nodeVal->var);
 }
 
@@ -72,7 +79,7 @@ int ypars::gui::start(SDL_Window *window, SDL_Renderer *renderer,
   // io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f,
   // nullptr, io.Fonts->GetGlyphRangesJapanese()); IM_ASSERT(font != nullptr);
 
-  ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+  constexpr auto clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
   // Main loop
   bool done = false;
@@ -130,22 +137,30 @@ int ypars::gui::start(SDL_Window *window, SDL_Renderer *renderer,
     if (ImGui::InputTextMultiline("Input Text", &ypars::text)) {
       try {
         ypars::tokens = l.tokenize(ypars::text);
-        for (auto &token : tokens) {
-          ypars::logger->info("Token: " + tokenToString(token.type) +
-                              (token.value.has_value()
-                                   ? (" | Value: " + token.value.value() + " ")
+        for (auto &[type, value, indent, line] : tokens) {
+          ypars::logger->info("Token: " + tokenToString(type) +
+                              (value.has_value()
+                                   ? (" | Value: " + value.value() + " ")
                                    : " ") +
-                              " | Line: " + std::to_string(token.line) +
-                              " | Indent: " + std::to_string(token.indent));
+                              " | Line: " + std::to_string(line) +
+                              " | Indent: " + std::to_string(indent));
         }
         ypars::parser p(tokens);
-        auto node = p.parse_prog();
+        const auto node = p.parse_prog();
+
+        std::vector<nlohmann::json> j;
         if (node != nullptr && !node->stmts.empty()) {
-          for (auto stmt : node->stmts) {
-            ypars::logger->info("Key: " + stmt->key->key.value.value());
-            print_value(stmt->value);
+          for (const auto stmt : node->stmts) {
+            nlohmann::json temp;
+            temp["key"] = stmt->key->key.value.value();
+            get_value(stmt->value, temp);
+            j.push_back(temp);
           }
         }
+        for (nlohmann::json &json : j) {
+          ypars::logger->info("JSON: " + json.dump());
+        }
+        j.clear();
         error = false;
       } catch (std::exception &e) {
         ypars::logger->error(e.what());
@@ -160,8 +175,8 @@ int ypars::gui::start(SDL_Window *window, SDL_Renderer *renderer,
     SDL_RenderSetScale(renderer, io.DisplayFramebufferScale.x,
                        io.DisplayFramebufferScale.y);
     SDL_SetRenderDrawColor(
-        renderer, (Uint8)(clear_color.x * 255), (Uint8)(clear_color.y * 255),
-        (Uint8)(clear_color.z * 255), (Uint8)(clear_color.w * 255));
+        renderer, static_cast<Uint8>(clear_color.x * 255), static_cast<Uint8>(clear_color.y * 255),
+        static_cast<Uint8>(clear_color.z * 255), static_cast<Uint8>(clear_color.w * 255));
     SDL_RenderClear(renderer);
     ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), renderer);
     SDL_RenderPresent(renderer);

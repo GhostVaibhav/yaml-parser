@@ -30,7 +30,7 @@ class error {
   error(component _c, reason _r, int _line, int _col)
       : c(_c), r(_r), line(_line), col(_col) {}
 
-  std::string toString();
+  [[nodiscard]] std::string toString() const;
 };
 
 }  // namespace ypars
