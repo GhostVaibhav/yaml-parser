@@ -1,1 +1,14 @@
+# Test YAML with various key-value patterns
 name: Coding challenges
+description: A collection of programming problems
+difficulty: 
+tags:
+  - algorithms
+  - data-structures
+  - optimization
+status: active
+priority:
+completed: false
+notes:
+  - started on 2024-01-01
+  - need to implement better solution

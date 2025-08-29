@@ -1,6 +1,7 @@
 #pragma once
 
 #include <optional>
+#include <variant>
 #include <vector>
 
 #include "allocator/allocator.hpp"

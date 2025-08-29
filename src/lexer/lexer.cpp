@@ -91,12 +91,23 @@ std::vector<ypars::Token> ypars::lexer::tokenize(const std::string& str) {
           col += static_cast<int>(buffer.size());
           buffer.clear();
         } else if (peek().value() == ':') {
+          // Check if we can have a colon here
           if (tokens.empty() || tokens.back().type == TokenType::VALUE) {
-            throw std::invalid_argument("");
+            throw std::invalid_argument("Invalid colon placement");
           }
           consume();
           tokens.push_back({.type = TokenType::OP_COLON, .line = line});
           ++col;
+          
+          // After colon, we can have either a value or end of line
+          // Skip any remaining whitespace on this line
+          while (peek().has_value() && std::isspace(peek().value())) {
+            consume();
+            ++col;
+          }
+          
+          // If there's no value after colon, that's fine - the key can exist without a value
+          // The next token will be processed on the next iteration or next line
         } else if (std::isspace(peek().value())) {
           ++col;
           consume();
@@ -108,7 +119,7 @@ std::vector<ypars::Token> ypars::lexer::tokenize(const std::string& str) {
             ++curIndent;
           }
         } else {
-          throw std::invalid_argument("");
+          throw std::invalid_argument("Unexpected character");
         }
       }
       ++line;

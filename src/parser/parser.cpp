@@ -90,10 +90,24 @@ std::optional<NodeStmt*> parser::parse_stmt() {
     if (!try_consume(TokenType::OP_COLON).has_value()) {
       throw std::runtime_error("COLON");
     }
-    if (const auto valStmt = parse_value()) {
-      stmt->value = valStmt.value();
+    
+    // After colon, we can have either a value or nothing (key without value)
+    // Check if there's a value on the same line or if we're at the end
+    if (peek().has_value() && peek().value().type == TokenType::VALUE) {
+      // There's a value after the colon
+      if (const auto valStmt = parse_value()) {
+        stmt->value = valStmt.value();
+      } else {
+        throw std::runtime_error("VALUE");
+      }
     } else {
-      throw std::runtime_error("VALUE");
+      // No value after colon - this is a valid key without value
+      // Create an empty value node
+      auto value = m_allocator.alloc<NodeValue>();
+      // Use an empty string token as the value to represent "no value"
+      Token emptyToken = {.type = TokenType::VALUE, .value = "", .line = stmt->key->key.line};
+      value->var = emptyToken;
+      stmt->value = value;
     }
     return stmt;
   }
