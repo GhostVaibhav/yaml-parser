@@ -104,9 +104,9 @@ std::optional<NodeStmt*> parser::parse_stmt() {
       // No value after colon - this is a valid key without value
       // Create an empty value node
       auto value = m_allocator.alloc<NodeValue>();
-      // Use an empty string token as the value to represent "no value"
-      Token emptyToken = {.type = TokenType::VALUE, .value = "", .line = stmt->key->key.line};
-      value->var = emptyToken;
+      // Use a null token (no value) to represent "no value"
+      Token nullToken = {.type = TokenType::VALUE, .value = std::nullopt, .line = stmt->key->key.line};
+      value->var = nullToken;
       stmt->value = value;
     }
     return stmt;

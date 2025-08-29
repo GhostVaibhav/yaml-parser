@@ -18,7 +18,12 @@ void get_value(ypars::NodeValue *nodeVal, nlohmann::json& json_value) {
     nlohmann::json& json_value;
 
     void operator()(const ypars::Token& val) const {
-      json_value["value"] = val.value.value();
+      if (val.value.has_value()) {
+        json_value["value"] = val.value.value();
+      } else {
+        // Handle null value (no value)
+        json_value["value"] = nullptr;
+      }
     }
     void operator()(const std::vector<ypars::NodeStmt *>& val) const {
       nlohmann::json temp;
